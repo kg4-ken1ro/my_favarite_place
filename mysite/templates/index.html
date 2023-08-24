@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <!-- <script type="module" src="{% static 'js/index.js' %}"></script> -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <title>
+        {% block title %}
+        {% if user.is_authenticated %}
+        MyPage
+        {% else %}
+        Main
+        {% endif %}
+        {% endblock %}
+    </title>
+</head>
+<body>
+    <header>
+        <div class="header_wrap">
+            {% if user.is_authenticated %}
+            <h2 class="header_h2">Welcome {{ user }} </h2>
+            <div class="openbtn1"><span></span><span></span><span></span></div>
+            {% else %}
+            <a href="{% url 'mfp:signup' %}" class="btn btn-primary">Signup</a>
+            {% endif %}
+        </div>
+
+        <nav class="header_nav">
+            <ul>
+                <li>
+                    <p>レストラン</p>
+                {% if latest_restaurant_list %}
+                    <ul>
+                    {% for restaurant in latest_restaurant_list %}
+                        <li>
+                            <p>{{restaurant.store_name}}</p>
+                            <p>{{restaurant.address}}</p>
+                            <p>{{restaurant.Kind_of_food}}</p>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No restaurant are available.</p>
+                {% endif %}
+                </li>
+                <li>
+                    <p>コンビニ</p>
+                {% if latest_c_store_list %}
+                    <ul>
+                    {% for c_store in latest_c_store_list %}
+                        <li>
+                            <p>{{c_store.store_name}}</p>
+                            <p>{{c_store.address}}</p>
+                            <p>{{c_store.eat_in}}</p>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No c_store are available.</p>
+                {% endif %}
+                </li>
+                <li>
+                    <p>トイレ</p>
+                {% if latest_restroom_list %}
+                    <ul>
+                    {% for restroom in latest_restroom_list %}
+                        <li>
+                            <p>{{restroom.location_name}}</p>
+                            <p>{{restroom.address}}</p>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No restroom are available.</p>
+                {% endif %}
+                </li>
+            </ul>
+            <p class="p_logout"><a href="{% url 'mfp:logout'%}">ログアウト</a></p>
+        </nav>
+    </header>
+    
+    <script type="text/javascript">
+        // Create the script tag, set the appropriate attributes
+        var script = document.createElement('script');
+        script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDCiehofsD_LSOROxRzgku-QMWrpypUTkA&callback=initAutocomplete&libraries=places&v=weekly';
+        script.async = true;
+
+            
+        function initAutocomplete() {
+            const map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 34.686272, lng: 135.519649 },
+                zoom: 14,
+                // mapTypeId: "roadmap",
+            });
+            // Create the search box and link it to the UI element.
+            const input = document.getElementById("pac-input");
+            const searchBox = new google.maps.places.SearchBox(input);
+
+            map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+            // Bias the SearchBox results towards current map's viewport.
+            map.addListener("bounds_changed", () => {
+                searchBox.setBounds(map.getBounds());
+            });
+
+            let markers = [];
+
+            // Listen for the event fired when the user selects a prediction and retrieve
+            // more details for that place.
+            searchBox.addListener("places_changed", () => {
+                const places = searchBox.getPlaces();
+
+                if (places.length == 0) {
+                return;
+                }
+
+                // Clear out the old markers.
+                markers.forEach((marker) => {
+                marker.setMap(null);
+                });
+                markers = [];
+
+                // For each place, get the icon, name and location.
+                const bounds = new google.maps.LatLngBounds();
+
+                places.forEach((place) => {
+                if (!place.geometry || !place.geometry.location) {
+                    console.log("Returned place contains no geometry");
+                    return;
+                }
+
+                const icon = {
+                    url: place.icon,
+                    size: new google.maps.Size(71, 71),
+                    origin: new google.maps.Point(0, 0),
+                    anchor: new google.maps.Point(17, 34),
+                    scaledSize: new google.maps.Size(25, 25),
+                };
+
+                // Create a marker for each place.
+                markers.push(
+                    new google.maps.Marker({
+                    map,
+                    icon,
+                    title: place.name,
+                    position: place.geometry.location,
+                    }),
+                );
+                if (place.geometry.viewport) {
+                    // Only geocodes have viewport.
+                    bounds.union(place.geometry.viewport);
+                } else {
+                    bounds.extend(place.geometry.location);
+                }
+                });
+                map.fitBounds(bounds);
+            });
+        }
+
+        window.initAutocomplete = initAutocomplete;
+        // Append the 'script' element to 'head'
+        document.head.appendChild(script);
+    </script>
+
+    <input
+        id="pac-input"
+        class="controls"
+        type="text"
+        placeholder="Search Box"
+    />
+
+    <div id="map"></div>
+      
+    <footer>
+        <div class="copyright"><small>copyright</small></div>
+    </footer>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <!--自作のJS-->
+    <script src="{% static 'js/index.js' %}"></script>
+
+</body>
+</html>

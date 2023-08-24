@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}ログイン{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>ログイン</h1>
+    <form action="" method="POST">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+            {{ field }}
+            {{ field.error }}
+        {% endfor %}
+        <br>
+        <button type="submit">ログイン</button>
+    </form>
+    <!-- <form action="" method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <p><input type="hidden" name="next" value="{{next}}"></p>
+        <button type="submit" onclick="location.href='index.html'">Login</button>
+    </form> -->
+    <a href="{% url 'mfp:signup' %}">ユーザー登録</a> 
+</div>
+{% endblock %}
+
